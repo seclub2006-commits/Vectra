@@ -2,11 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-GITHUB DEPLOY MANAGER – с запоминанием последнего пуша
-- Определяет изменения относительно последней успешной выгрузки на GitHub
-- Автоматически помечает: new, modified, deleted, clean
-- Папки отображают сводный статус: все, пусто, частично (X/Y)
-- Каскадные чекбоксы, ленивое дерево, асинхронные операции, отмена
+GITHUB DEPLOY MANAGER – полная версия с запоминанием последнего пуша
+и автоматическим созданием репозитория при ошибке 404.
 """
 
 import os
@@ -71,11 +68,11 @@ import requests
 load_dotenv()
 
 TOKEN = os.getenv("GITHUB_TOKEN", "")
-REPO_NAME = os.getenv("GITHUB_REPO_NAME", "Vectra")
+REPO_NAME = os.getenv("GITHUB_REPO_NAME", "TradingBot")
 BRANCH = "main"
 MAX_FILE_SIZE_MB = 100
 HTTP_TIMEOUT = 30
-STATE_FILE = ".last_push_state.json"   # файл состояния в корне проекта
+STATE_FILE = ".last_push_state.json"
 
 # ============================================================
 # HELPERS
@@ -86,14 +83,11 @@ class GitStatus:
     NEW = "new"
     DELETED = "deleted"
     CLEAN = "clean"
-    # Для папок – текстовые описания вычисляются отдельно
-
 
 def get_safe_log_text(text: str) -> str:
     if TOKEN and TOKEN in text:
         return text.replace(TOKEN, "***HIDDEN_TOKEN***")
     return text
-
 
 def open_file_explorer(path: Path):
     if sys.platform == "win32":
@@ -103,9 +97,7 @@ def open_file_explorer(path: Path):
     else:
         subprocess.run(["xdg-open", str(path)])
 
-
 def compute_file_hash(file_path: Path) -> str:
-    """Вычисляет SHA256 хеш содержимого файла"""
     hasher = hashlib.sha256()
     try:
         with open(file_path, "rb") as f:
@@ -114,7 +106,6 @@ def compute_file_hash(file_path: Path) -> str:
         return hasher.hexdigest()
     except Exception:
         return ""
-
 
 # ============================================================
 # УПРАВЛЕНИЕ СОСТОЯНИЕМ ПОСЛЕДНЕГО ПУША
@@ -125,19 +116,16 @@ class PushStateManager:
         self.state_path = root_dir / STATE_FILE
 
     def load_state(self) -> Dict[str, str]:
-        """Возвращает словарь {относительный_путь: хеш} последнего пуша"""
         if not self.state_path.exists():
             return {}
         try:
             with open(self.state_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            # data expected: {"files": {path: hash}}
             return data.get("files", {})
         except Exception:
             return {}
 
     def save_state(self, files_hash: Dict[str, str]):
-        """Сохраняет состояние (хеши всех файлов)"""
         data = {
             "timestamp": datetime.now().isoformat(),
             "files": files_hash
@@ -149,23 +137,17 @@ class PushStateManager:
             print(f"Ошибка сохранения состояния: {e}")
 
     def compute_current_state(self, root_dir: Path, pathspec: Optional[PathSpec]) -> Dict[str, str]:
-        """Сканирует текущую файловую систему и возвращает {отн.путь: хеш} для всех файлов,
-           кроме игнорируемых, удалённых, слишком больших"""
         current_state = {}
-        # Рекурсивно обходим все файлы
         for root, dirs, files in os.walk(root_dir):
-            # Пропускаем .git
             if ".git" in dirs:
                 dirs.remove(".git")
             for file in files:
                 abs_path = Path(root) / file
                 rel_path = str(abs_path.relative_to(root_dir)).replace("\\", "/")
-                # Игнорируем .gitignore и сам файл состояния
                 if rel_path == STATE_FILE or rel_path == ".gitignore":
                     continue
                 if pathspec and pathspec.match_file(rel_path):
                     continue
-                # Проверка размера
                 if abs_path.stat().st_size / (1024 * 1024) > MAX_FILE_SIZE_MB:
                     continue
                 file_hash = compute_file_hash(abs_path)
@@ -173,9 +155,8 @@ class PushStateManager:
                     current_state[rel_path] = file_hash
         return current_state
 
-
 # ============================================================
-# GIT WORKER (с поддержкой отмены и прямых операций add/rm)
+# GIT WORKER (с автоматическим восстановлением remote)
 # ============================================================
 
 class GitWorker(QThread):
@@ -284,6 +265,28 @@ class GitWorker(QThread):
         except:
             return False
 
+    def setup_remote_and_push(self) -> bool:
+        remote_url = self.run_git(["remote", "get-url", "origin"], check=False, capture=True)
+        if not remote_url:
+            repo_url = self.create_github_repo()
+            self.run_git(["remote", "add", "origin", repo_url])
+            remote_url = repo_url
+
+        try:
+            self.run_git(["push", "-u", "origin", self.branch])
+            return True
+        except Exception as e:
+            error_msg = str(e)
+            if "Repository not found" in error_msg or "404" in error_msg:
+                self.log("Репозиторий не найден, пробуем создать заново...")
+                self.run_git(["remote", "remove", "origin"], check=False)
+                repo_url = self.create_github_repo()
+                self.run_git(["remote", "add", "origin", repo_url])
+                self.run_git(["push", "-u", "origin", self.branch])
+                return True
+            else:
+                raise e
+
     def run(self):
         try:
             self.ensure_git_config_local()
@@ -293,14 +296,12 @@ class GitWorker(QThread):
             total = len(self.to_rm) + len(self.to_add)
             processed = 0
 
-            # Удаление файлов
             if self.to_rm:
                 self.log(f"Удаление файлов: {', '.join(self.to_rm)}")
                 self.run_git(["rm"] + self.to_rm)
                 processed += len(self.to_rm)
                 self.progress_signal.emit(processed, total)
 
-            # Добавление новых и изменённых файлов
             if self.to_add:
                 chunk_size = 50
                 for i in range(0, len(self.to_add), chunk_size):
@@ -312,29 +313,16 @@ class GitWorker(QThread):
                     processed += len(chunk)
                     self.progress_signal.emit(processed, total)
 
-            # Проверка staged изменений
             diff_check = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=self.root_dir)
             if diff_check.returncode == 0:
                 self.finished_signal.emit(False, "Нет изменений для коммита")
                 return
 
-            # Коммит
             self.run_git(["commit", "-m", self.commit_message])
-
-            # Проверка remote origin
-            remote_url = self.run_git(["remote", "get-url", "origin"], check=False, capture=True)
-            if not remote_url:
-                repo_url = self.create_github_repo()
-                self.run_git(["remote", "add", "origin", repo_url])
-                remote_url = repo_url
-
-            # Пуш
-            self.run_git(["push", "-u", "origin", self.branch])
-
+            self.setup_remote_and_push()
             self.finished_signal.emit(True, "Успешно выгружено на GitHub")
         except Exception as e:
             self.finished_signal.emit(False, str(e))
-
 
 # ============================================================
 # КЭШ ИКОНОК
@@ -356,9 +344,8 @@ class CachedIconProvider:
         suffix = path.suffix.lower() if not is_dir else ""
         return self.get_icon(suffix, is_dir)
 
-
 # ============================================================
-# ПОТОК ПОСТРОЕНИЯ ДЕРЕВА (с учётом изменений относительно последнего пуша)
+# ПОТОК ПОСТРОЕНИЯ ДЕРЕВА
 # ============================================================
 
 class TreeBuilderThread(QThread):
@@ -374,13 +361,10 @@ class TreeBuilderThread(QThread):
         self.icon_provider = icon_provider
 
     def run(self):
-        # Загружаем состояние последнего пуша
         last_state = self.state_manager.load_state()
-        # Сканируем текущее состояние
         current_state = self.state_manager.compute_current_state(self.root_dir, self.pathspec)
 
-        # Определяем изменения
-        changes = {}  # path -> status
+        changes = {}
         for rel_path in current_state:
             if rel_path not in last_state:
                 changes[rel_path] = GitStatus.NEW
@@ -392,7 +376,6 @@ class TreeBuilderThread(QThread):
             if rel_path not in current_state:
                 changes[rel_path] = GitStatus.DELETED
 
-        # Построение дерева
         root_item = QTreeWidgetItem()
         root_item.setText(0, self.root_dir.name)
         root_item.setData(0, Qt.UserRole, str(self.root_dir))
@@ -406,7 +389,6 @@ class TreeBuilderThread(QThread):
 
         self._add_directory(root_item, self.root_dir, changes)
         self._update_all_folder_states(root_item)
-
         self.finished_signal.emit(root_item)
 
     def _add_directory(self, parent_item: QTreeWidgetItem, directory: Path, changes: Dict[str, str]):
@@ -421,13 +403,10 @@ class TreeBuilderThread(QThread):
                 item.setData(0, Qt.UserRole, str(entry))
                 item.setIcon(0, self.icon_provider.icon_for_path(entry))
                 item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-
-                # Состояние чекбокса (восстанавливаем из сохранённого)
                 if rel_path in self.checked_paths:
                     item.setCheckState(0, Qt.Checked)
                 else:
-                    item.setCheckState(0, Qt.Checked)  # по умолчанию отмечено
-
+                    item.setCheckState(0, Qt.Checked)
                 if entry.is_dir():
                     parent_item.addChild(item)
                     self._add_directory(item, entry, changes)
@@ -450,7 +429,6 @@ class TreeBuilderThread(QThread):
                 item.setText(1, "ignored")
             item.setForeground(0, QColor("#666"))
         else:
-            # Отображаем статус изменения
             if status == GitStatus.NEW:
                 item.setText(1, "new")
                 item.setForeground(0, QColor("#44ff44"))
@@ -460,7 +438,7 @@ class TreeBuilderThread(QThread):
             elif status == GitStatus.DELETED:
                 item.setText(1, "deleted (удалить на GitHub)")
                 item.setForeground(0, QColor("#ff4444"))
-                item.setFlags(item.flags() & ~Qt.ItemIsUserCheckable)  # удалённые нельзя выбрать
+                item.setFlags(item.flags() & ~Qt.ItemIsUserCheckable)
             else:
                 item.setText(1, "clean")
                 item.setForeground(0, QColor("#bbbbbb"))
@@ -521,9 +499,8 @@ class TreeBuilderThread(QThread):
         else:
             folder_item.setText(1, f"частично ({int(checked)}/{total})")
 
-
 # ============================================================
-# MAIN WINDOW
+# ГЛАВНОЕ ОКНО
 # ============================================================
 
 class DeployGUI(QMainWindow):
@@ -544,9 +521,6 @@ class DeployGUI(QMainWindow):
         self.checked_paths: Set[str] = set()
         self.start_building_tree()
 
-    # ========================================================
-    # UI
-    # ========================================================
     def init_ui(self):
         self.setWindowTitle("GitHub Deploy Manager (с памятью последнего пуша)")
         self.resize(1600, 950)
@@ -652,9 +626,6 @@ class DeployGUI(QMainWindow):
         self.log_console.appendPlainText(get_safe_log_text(text))
         self.log_console.moveCursor(QTextCursor.End)
 
-    # ========================================================
-    # ИНИЦИАЛИЗАЦИЯ И ПРОВЕРКИ
-    # ========================================================
     def check_git(self):
         if shutil.which("git") is None:
             QMessageBox.critical(self, "Ошибка", "Git не установлен")
@@ -704,9 +675,6 @@ class DeployGUI(QMainWindow):
         else:
             self.pathspec = None
 
-    # ========================================================
-    # ПОСТРОЕНИЕ ДЕРЕВА
-    # ========================================================
     def start_building_tree(self):
         self.progress.show()
         self.progress.setRange(0, 0)
@@ -725,9 +693,6 @@ class DeployGUI(QMainWindow):
         self.log("Дерево загружено. Изменения определены относительно последнего пуша.")
         self._save_all_check_states()
 
-    # ========================================================
-    # ОБРАБОТКА КЛИКОВ ПО ЧЕКБОКСАМ
-    # ========================================================
     def on_item_clicked(self, item: QTreeWidgetItem, column: int):
         if column == 0 and (item.flags() & Qt.ItemIsUserCheckable):
             new_state = item.checkState(0)
@@ -795,9 +760,6 @@ class DeployGUI(QMainWindow):
         else:
             folder_item.setText(1, f"частично ({int(checked)}/{total})")
 
-    # ========================================================
-    # ГЛОБАЛЬНЫЕ КНОПКИ
-    # ========================================================
     def select_all_items(self):
         root = self.tree.topLevelItem(0)
         if root:
@@ -825,9 +787,6 @@ class DeployGUI(QMainWindow):
         for i in range(item.childCount()):
             self._collect_checked_paths(item.child(i))
 
-    # ========================================================
-    # ФИЛЬТРАЦИЯ
-    # ========================================================
     def filter_tree(self):
         text = self.search_input.text().lower()
         root = self.tree.topLevelItem(0)
@@ -845,9 +804,6 @@ class DeployGUI(QMainWindow):
         item.setHidden(not visible)
         return visible
 
-    # ========================================================
-    # КОНТЕКСТНОЕ МЕНЮ
-    # ========================================================
     def show_context_menu(self, pos):
         item = self.tree.itemAt(pos)
         if not item:
@@ -865,9 +821,6 @@ class DeployGUI(QMainWindow):
         menu.addAction(open_exp)
         menu.exec_(self.tree.viewport().mapToGlobal(pos))
 
-    # ========================================================
-    # DIFF PREVIEW (показывает изменения относительно последнего пуша)
-    # ========================================================
     def show_diff_preview(self):
         items = self.tree.selectedItems()
         if not items:
@@ -877,31 +830,25 @@ class DeployGUI(QMainWindow):
         if not path.is_file():
             return
         rel_path = str(path.relative_to(self.root_dir)).replace("\\", "/")
-        # Получаем статус из дерева (есть в тексте)
         status = item.text(1).lower()
         if status in ("new", "modified"):
-            # Пытаемся показать diff: сравниваем текущее содержимое с сохранённым хешем (если есть)
             last_state = self.state_manager.load_state()
             if rel_path in last_state:
-                # Получаем файл из последнего пуша? Не сохраняем содержимое, только хеш.
-                # Вместо этого используем git diff между HEAD и файлом? Но HEAD может не соответствовать последнему пушу.
-                # Для простоты покажем просто сообщение.
                 self.diff_preview.setPlainText(
                     f"Файл {rel_path} помечен как '{status}'.\n"
                     "Для просмотра различий используйте внешние инструменты (IDE, git diff)."
                 )
             else:
-                self.diff_preview.setPlainText(
-                    f"Файл {rel_path} новый. Содержимое:\n\n{path.read_text(encoding='utf-8', errors='replace')[:5000]}"
-                )
+                try:
+                    content = path.read_text(encoding='utf-8', errors='replace')
+                    self.diff_preview.setPlainText(f"Новый файл {rel_path}:\n\n{content[:5000]}")
+                except Exception as e:
+                    self.diff_preview.setPlainText(f"Ошибка чтения: {e}")
         elif status == "deleted":
             self.diff_preview.setPlainText(f"Файл {rel_path} удалён локально и будет удалён на GitHub.")
         else:
             self.diff_preview.setPlainText(f"Файл {rel_path} не изменялся (clean).")
 
-    # ========================================================
-    # СБОР ВЫБРАННЫХ ФАЙЛОВ ДЛЯ ПУША
-    # ========================================================
     def get_selected_changes(self) -> Tuple[List[str], List[str]]:
         to_add = []
         to_rm = []
@@ -925,9 +872,6 @@ class DeployGUI(QMainWindow):
             else:
                 self._collect_selected_changes(child, to_add, to_rm)
 
-    # ========================================================
-    # ЗАГРУЗКА НА GITHUB
-    # ========================================================
     def upload_selected(self):
         to_add, to_rm = self.get_selected_changes()
         if not to_add and not to_rm:
@@ -970,7 +914,6 @@ class DeployGUI(QMainWindow):
         self.upload_button.setEnabled(True)
         self.cancel_button.setEnabled(False)
         if success:
-            # Сохраняем новое состояние после успешного пуша
             current_state = self.state_manager.compute_current_state(self.root_dir, self.pathspec)
             self.state_manager.save_state(current_state)
             self.log("Состояние последнего пуша сохранено.")
@@ -979,9 +922,6 @@ class DeployGUI(QMainWindow):
             QMessageBox.critical(self, "Ошибка", message)
         self.refresh_all()
 
-    # ========================================================
-    # ОБНОВЛЕНИЕ ДЕРЕВА
-    # ========================================================
     def refresh_all(self):
         self._save_all_check_states()
         self.expanded_paths.clear()
@@ -1004,7 +944,6 @@ class DeployGUI(QMainWindow):
             item.setExpanded(True)
         for i in range(item.childCount()):
             self._restore_expanded_state(item.child(i))
-
 
 # ============================================================
 # MAIN
