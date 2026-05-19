@@ -1,0 +1,133 @@
+/* light.css — полная светлая тема */
+body {
+    background-color: #f5f5f5;
+    color: #1a1a1a;
+}
+
+.top-bar, .tab-content, .bots-table-container, .modal-content, .card {
+    background: #ffffff;
+    border-color: #ddd;
+}
+
+th {
+    background: #e0e0e0;
+    color: #333;
+}
+
+tr:hover {
+    background: #f0f0f0;
+}
+
+input, select, textarea {
+    background: #fff;
+    color: #000;
+    border-color: #ccc;
+}
+
+.status-badge {
+    background: #eee;
+    color: #333;
+}
+
+button {
+    background: #ddd;
+    color: #000;
+}
+
+    button.primary {
+        background: #7c3aed;
+        color: white;
+    }
+
+    button.danger {
+        background: #dc2626;
+        color: white;
+    }
+
+    button.secondary {
+        background: #ccc;
+        color: #000;
+    }
+
+    button:hover {
+        filter: brightness(0.95);
+    }
+
+.tab-btn {
+    color: #333;
+    background: #f0f0f0;
+}
+
+    .tab-btn.active {
+        background: #7c3aed;
+        color: white;
+    }
+
+.tab-content {
+    background: #ffffff;
+}
+
+.card {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+}
+
+.sub-table th {
+    background: #e9e9e9;
+}
+
+.modal-content {
+    background: #ffffff;
+}
+
+.close-modal {
+    color: #666;
+}
+
+    .close-modal:hover {
+        color: #000;
+    }
+
+.form-group input, .form-group select, .form-group textarea {
+    background: #fff;
+    border-color: #ccc;
+    color: #000;
+}
+
+.status.online {
+    color: #059669;
+}
+
+.status.offline {
+    color: #dc2626;
+}
+
+.positive-pnl {
+    color: #059669;
+}
+
+.negative-pnl {
+    color: #dc2626;
+}
+
+.log-level-info {
+    color: #0a7e0a;
+}
+
+.log-level-warning {
+    color: #d97706;
+}
+
+.log-level-error {
+    color: #dc2626;
+}
+
+.bid-price {
+    color: #059669;
+}
+
+.ask-price {
+    color: #dc2626;
+}
+
+/* Адаптивность в светлой теме — наследуется от style.css, дополнительно не требуется */

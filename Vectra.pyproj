@@ -1,0 +1,174 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>037bb7bd-773f-4df9-b01d-c7882096755e</ProjectGuid>
+    <ProjectHome>
+    </ProjectHome>
+    <StartupFile>core\main.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>C:\trading_bot\TradingBot\TradingBot\</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>Vectra</Name>
+    <RootNamespace>TradingBot</RootNamespace>
+    <InterpreterId>Global|PythonCore|3.14</InterpreterId>
+    <IsWindowsApplication>False</IsWindowsApplication>
+    <TestFramework>Pytest</TestFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="bots\base_bot.py" />
+    <Compile Include="bots\grid\grid_bot.py" />
+    <Compile Include="bots\grid\__init__.py" />
+    <Compile Include="bots\manual\manual_bot.py" />
+    <Compile Include="bots\manual\__init__.py" />
+    <Compile Include="bots\test\test_bot.py" />
+    <Compile Include="bots\test\__init__.py" />
+    <Compile Include="bots\trend\ema_bot.py" />
+    <Compile Include="bots\trend\rsi_bot.py" />
+    <Compile Include="bots\trend\__init__.py" />
+    <Compile Include="bots\__init__.py" />
+    <Compile Include="clean_and_rebuild.py" />
+    <Compile Include="connectors\base\exceptions.py" />
+    <Compile Include="connectors\base\exchange_connector.py" />
+    <Compile Include="connectors\base\__init__.py" />
+    <Compile Include="connectors\bitget\common.py" />
+    <Compile Include="connectors\bitget\futures\account.py" />
+    <Compile Include="connectors\bitget\futures\market.py" />
+    <Compile Include="connectors\bitget\futures\orders.py" />
+    <Compile Include="connectors\bitget\futures\position.py" />
+    <Compile Include="connectors\bitget\futures\trigger.py" />
+    <Compile Include="connectors\bitget\futures\websocket.py" />
+    <Compile Include="connectors\bitget\futures\__init__.py" />
+    <Compile Include="connectors\bitget\signature.py" />
+    <Compile Include="connectors\bitget\spot\account.py" />
+    <Compile Include="connectors\bitget\spot\market.py" />
+    <Compile Include="connectors\bitget\spot\orders.py" />
+    <Compile Include="connectors\bitget\spot\trigger.py" />
+    <Compile Include="connectors\bitget\spot\websocket.py" />
+    <Compile Include="connectors\bitget\spot\__init__.py" />
+    <Compile Include="connectors\bitget\websocket_manager.py" />
+    <Compile Include="connectors\bitget\__init__.py" />
+    <Compile Include="connectors\__init__.py" />
+    <Compile Include="core\bot_worker.py" />
+    <Compile Include="core\config_storage.py" />
+    <Compile Include="core\csv_market_data_provider.py" />
+    <Compile Include="core\database.py" />
+    <Compile Include="core\data_manager.py" />
+    <Compile Include="core\emulated_connector.py" />
+    <Compile Include="core\historical_market_data_provider.py" />
+    <Compile Include="core\main.py" />
+    <Compile Include="core\market_data_provider.py" />
+    <Compile Include="core\market_data_provider_factory.py" />
+    <Compile Include="core\models.py" />
+    <Compile Include="core\real_market_data_provider.py" />
+    <Compile Include="core\server.py" />
+    <Compile Include="core\task_manager.py" />
+    <Compile Include="core\__init__.py" />
+    <Compile Include="deploy_to_github.py" />
+    <Compile Include="export_project.py" />
+    <Compile Include="install_deps.py" />
+    <Compile Include="quick_test.py" />
+    <Compile Include="run_web.py" />
+    <Compile Include="scripts\encrypt_existing_keys.py" />
+    <Compile Include="scripts\generate_proto.py" />
+    <Compile Include="scripts\reencrypt_keys.py" />
+    <Compile Include="tests\test_controller.py" />
+    <Compile Include="tests\test_indicators.py" />
+    <Compile Include="tests\test_stream_manager.py" />
+    <Compile Include="test_connectors.py" />
+    <Compile Include="test_grpc.py" />
+    <Compile Include="upload_to_github.py" />
+    <Compile Include="utils\bot_registry.py" />
+    <Compile Include="utils\dependency_manager.py" />
+    <Compile Include="utils\discover_bots.py" />
+    <Compile Include="utils\discover_connectors.py" />
+    <Compile Include="utils\encryption.py" />
+    <Compile Include="utils\time_provider.py" />
+    <Compile Include="utils\__init__.py" />
+    <Compile Include="web\auth.py" />
+    <Compile Include="web\config.py" />
+    <Compile Include="web\dependencies.py" />
+    <Compile Include="web\grpc_client.py" />
+    <Compile Include="web\main.py" />
+    <Compile Include="web\models.py" />
+    <Compile Include="web\routers\auth.py" />
+    <Compile Include="web\routers\bots.py" />
+    <Compile Include="web\routers\connectors.py" />
+    <Compile Include="web\routers\logs.py" />
+    <Compile Include="web\routers\manual.py" />
+    <Compile Include="web\routers\market.py" />
+    <Compile Include="web\routers\trading.py" />
+    <Compile Include="web\routers\__init__.py" />
+    <Compile Include="web\services\broadcast_service.py" />
+    <Compile Include="web\services\__init__.py" />
+    <Compile Include="web\websocket_manager.py" />
+    <Compile Include="web\__init__.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bots\grid\" />
+    <Folder Include="bots\manual\" />
+    <Folder Include="bots\test\" />
+    <Folder Include="bots\trend\" />
+    <Folder Include="connectors\" />
+    <Folder Include="connectors\base\" />
+    <Folder Include="connectors\bitget\" />
+    <Folder Include="connectors\bitget\futures\" />
+    <Folder Include="connectors\bitget\spot\" />
+    <Folder Include="core\" />
+    <Folder Include="bots\" />
+    <Folder Include="web\" />
+    <Folder Include="tests\" />
+    <Folder Include="scripts\" />
+    <Folder Include="protos\" />
+    <Folder Include="utils\" />
+    <Folder Include="web\services\" />
+    <Folder Include="web\routers\" />
+    <Folder Include="web\static\" />
+    <Folder Include="web\static\css\" />
+    <Folder Include="web\static\js\" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="Global|PythonCore|3.14" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".env.example" />
+    <Content Include=".gitignore" />
+    <Content Include="protos\core.proto" />
+    <Content Include="README.md" />
+    <Content Include="requirements.txt" />
+    <Content Include="web\static\css\light.css" />
+    <Content Include="web\static\css\style.css" />
+    <Content Include="web\static\index.html" />
+    <Content Include="web\static\js\api.js" />
+    <Content Include="web\static\js\bots.js" />
+    <Content Include="web\static\js\chart-helpers.js" />
+    <Content Include="web\static\js\config.js" />
+    <Content Include="web\static\js\connectors.js" />
+    <Content Include="web\static\js\main.js" />
+    <Content Include="web\static\js\manual_terminal.js" />
+    <Content Include="web\static\js\modals.js" />
+    <Content Include="web\static\js\state.js" />
+    <Content Include="web\static\js\timers.js" />
+    <Content Include="web\static\js\ui.js" />
+    <Content Include="web\static\js\utils.js" />
+    <Content Include="web\static\manual_terminal.html" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+  <!-- Uncomment the CoreCompile target to enable the Build command in
+       Visual Studio and specify your pre- and post-build commands in
+       the BeforeBuild and AfterBuild targets below. -->
+  <!--<Target Name="CoreCompile" />-->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>

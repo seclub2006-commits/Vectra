@@ -1,0 +1,59 @@
+# Файлы конфигурации с ключами (не храним в репозитории)
+.env
+.env.local
+*.config.json
+
+# Базы данных SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# Сгенерированные protobuf файлы
+*_pb2.py
+*_pb2_grpc.py
+
+# Кэш Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Виртуальное окружение
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Файлы IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Логи
+*.log
+logs/
+log_*.txt
+
+# Файл подключения GUI (содержит пароль)
+gui_connection.json
+
+# Сборки
+dist/
+build/
+*.egg-info/
+*.egg
+*.whl
+
+# Временные файлы бэктестов
+backtest_results/
+*.backtest
+
+# Пользовательские данные
+vectra.db
+trading_bot.db

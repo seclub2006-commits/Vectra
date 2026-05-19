@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Vectra – Ручной терминал</title>
+    <!-- Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.js"></script>
+    <!-- Notyf уведомления -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Общие стили Vectra -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Специфические стили терминала -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0f0f1a;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', 'Inter', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 8px;
+            gap: 8px;
+        }
+        /* Верхняя панель */
+        .top-bar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: #1e1e2e;
+            padding: 8px 16px;
+            border-radius: 12px;
+        }
+
+            .top-bar select, .top-bar input, .top-bar button {
+                padding: 6px 12px;
+                border-radius: 8px;
+                border: 1px solid #4a4a5a;
+                background: #2a2a3a;
+                color: white;
+                cursor: pointer;
+            }
+
+                .top-bar button.primary {
+                    background: #7c3aed;
+                }
+
+        .status-indicator {
+            margin-left: auto;
+            font-size: 0.8rem;
+        }
+        /* Основной контент: график + правая панель */
+        .main-content {
+            display: flex;
+            flex: 1;
+            gap: 8px;
+            min-height: 0;
+        }
+
+        .chart-container {
+            flex: 3;
+            background: #0d1117;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        #chart {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+        }
+
+        .right-panel {
+            flex: 1;
+            background: #1e1e2e;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 12px;
+            overflow-y: auto;
+        }
+        /* Блоки правой панели */
+        .card {
+            background: #2a2a3a;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .position-info {
+            font-size: 0.9rem;
+        }
+
+        .order-entry {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .order-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+            .order-row input, .order-row select {
+                flex: 1;
+                padding: 6px;
+                background: #2a2a3a;
+                border: 1px solid #4a4a5a;
+                border-radius: 6px;
+                color: white;
+            }
+
+        .btn-buy {
+            background: #10b981;
+        }
+
+        .btn-sell {
+            background: #ef4444;
+        }
+
+        .leverage-slider {
+            width: 100%;
+        }
+        /* Нижняя панель с таблицами */
+        .bottom-panel {
+            background: #1e1e2e;
+            border-radius: 12px;
+            padding: 8px;
+            height: 200px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .orders-table, .trades-table {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        th, td {
+            padding: 4px 6px;
+            text-align: left;
+            border-bottom: 1px solid #2d2d3f;
+        }
+
+        th {
+            background: #161626;
+        }
+
+        button.icon-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+            button.icon-btn:hover {
+                color: white;
+            }
+
+        .positive-pnl {
+            color: #10b981;
+        }
+
+        .negative-pnl {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-container">
+        <div class="top-bar">
+            <select id="connector-select" style="min-width: 150px;">
+                <option value="">-- Загрузка коннекторов --</option>
+            </select>
+            <div style="position: relative;">
+                <input type="text" id="symbol-input" placeholder="Поиск символа" autocomplete="off" style="min-width: 150px;">
+                <div id="symbol-dropdown" style="position: absolute; top: 100%; left: 0; background: #2a2a3a; border: 1px solid #4a4a5a; border-radius: 6px; max-height: 200px; overflow-y: auto; width: 100%; display: none; z-index: 100;"></div>
+            </div>
+            <select id="timeframe-select">
+                <option>1m</option>
+                <option>5m</option>
+                <option>15m</option>
+                <option>30m</option>
+                <option selected>1H</option>
+                <option>4H</option>
+                <option>1D</option>
+                <option>1W</option>
+            </select>
+            <button id="apply-tf" class="primary">Применить</button>
+            <button id="refresh-data"><i class="fas fa-sync-alt"></i> Обновить</button>
+            <div class="status-indicator" id="conn-status">
+                <i class="fas fa-circle" style="color:#ef4444"></i> Офлайн
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="chart-container">
+                <div id="chart"></div>
+            </div>
+            <div class="right-panel">
+                <!-- Информация о позиции -->
+                <div class="card position-info" id="position-card">
+                    <h4>Позиция</h4>
+                    <div id="position-details">Нет открытой позиции</div>
+                    <button id="close-position-btn" style="margin-top: 8px; width: 100%;" class="danger" disabled>Закрыть позицию</button>
+                </div>
+                <!-- Панель создания ордера -->
+                <div class="card">
+                    <h4>Новый ордер</h4>
+                    <div class="order-entry">
+                        <div class="order-row">
+                            <select id="order-side">
+                                <option value="buy">Покупка (Long)</option>
+                                <option value="sell">Продажа (Short)</option>
+                            </select>
+                            <select id="order-type">
+                                <option value="market">Рыночный</option>
+                                <option value="limit">Лимитный</option>
+                                <option value="stop_market">Стоп-маркет</option>
+                                <option value="stop_limit">Стоп-лимит</option>
+                            </select>
+                        </div>
+                        <div class="order-row">
+                            <input type="number" id="order-price" placeholder="Цена (для лимитных)">
+                            <input type="number" id="order-size" placeholder="Количество (в контрактах)">
+                        </div>
+                        <div class="order-row">
+                            <input type="number" id="order-size-usdt" placeholder="Или сумма в USDT">
+                        </div>
+                        <div class="order-row">
+                            <label><input type="checkbox" id="reduce-only"> Reduce only</label>
+                        </div>
+                        <div class="order-row">
+                            <button id="submit-order" class="primary" style="flex:2">Отправить ордер</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Управление плечом и TP/SL -->
+                <div class="card">
+                    <h4>Управление рисками</h4>
+                    <div class="order-row">
+                        <span>Плечо:</span>
+                        <input type="range" id="leverage-slider" min="1" max="125" value="10" step="1">
+                        <span id="leverage-value">10x</span>
+                        <button id="apply-leverage" class="secondary">Применить</button>
+                    </div>
+                    <div class="order-row">
+                        <input type="number" id="tp-price" placeholder="Take Profit (цена)">
+                        <input type="number" id="sl-price" placeholder="Stop Loss (цена)">
+                    </div>
+                    <div class="order-row">
+                        <button id="set-tpsl" class="secondary">Установить TP/SL</button>
+                    </div>
+                </div>
+                <!-- Баланс -->
+                <div class="card">
+                    <h4>Баланс USDT</h4>
+                    <div id="balance-display">--</div>
+                    <button id="refresh-balance" class="secondary" style="margin-top: 8px;">Обновить</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-panel">
+            <div class="orders-table">
+                <h4>Открытые ордера</h4>
+                <table id="open-orders-table">
+                    <thead><tr><th>ID</th><th>Сторона</th><th>Тип</th><th>Цена</th><th>Кол-во</th><th>Заполнено</th><th>Действие</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="trades-table">
+                <h4>Последние сделки</h4>
+                <table id="trades-table">
+                    <thead><tr><th>Время</th><th>Сторона</th><th>Цена</th><th>Кол-во</th><th>PnL</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/static/js/manual_terminal.js"></script>
+</body>
+</html>

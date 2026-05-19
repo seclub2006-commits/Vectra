@@ -1,0 +1,602 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #0f0f1a;
+    font-family: 'Segoe UI', 'Inter', sans-serif;
+    color: #e0e0e0;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+/* ========== ФОРМА ВХОДА ========== */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login-card {
+    background: #1e1e2e;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    width: 300px;
+    text-align: center;
+}
+
+    .login-card h2 {
+        margin-bottom: 1.5rem;
+        color: #fff;
+    }
+
+    .login-card input {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 1rem;
+        background: #2a2a3a;
+        border: 1px solid #4a4a5a;
+        border-radius: 8px;
+        color: white;
+        font-size: 1rem;
+    }
+
+    .login-card button {
+        width: 100%;
+        padding: 10px;
+        background: #7c3aed;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+        .login-card button:hover {
+            background: #9f67ff;
+        }
+
+.error-message {
+    color: #ef4444;
+    margin-top: 0.5rem;
+}
+
+/* ========== ОСНОВНОЙ ИНТЕРФЕЙС ========== */
+#main-container {
+    padding: 16px;
+}
+
+/* Верхняя панель */
+.top-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #1e1e2e;
+    padding: 12px 20px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #9f67ff;
+    margin-right: auto;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.status-badge {
+    background: #2a2a3a;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+    .status-badge i {
+        font-size: 0.7rem;
+    }
+
+button {
+    background: #2d2d3f;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 16px;
+    color: #f0f0f0;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+    button.primary {
+        background: #7c3aed;
+    }
+
+        button.primary:hover {
+            background: #9f67ff;
+        }
+
+    button.danger {
+        background: #dc2626;
+    }
+
+        button.danger:hover {
+            background: #ef4444;
+        }
+
+    button.secondary {
+        background: #3a3a5a;
+    }
+
+    button:hover {
+        filter: brightness(1.1);
+    }
+
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+/* Фильтры */
+.filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+    .filters input, .filters select {
+        background: #2a2a3a;
+        border: 1px solid #4a4a5a;
+        border-radius: 10px;
+        padding: 8px 12px;
+        color: white;
+        font-size: 0.9rem;
+    }
+
+/* Таблица ботов */
+.bots-table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    background: #1e1e2e;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    text-align: left;
+    padding: 12px 8px;
+    border-bottom: 1px solid #2d2d3f;
+}
+
+th {
+    background: #161626;
+    color: #b0b0d0;
+    font-weight: 600;
+}
+
+tr:hover {
+    background: #2a2a3a;
+}
+
+.status.online {
+    color: #10b981;
+    font-weight: bold;
+}
+
+.status.offline {
+    color: #ef4444;
+    font-weight: bold;
+}
+
+.positive-pnl {
+    color: #10b981;
+    font-weight: bold;
+}
+
+.negative-pnl {
+    color: #ef4444;
+    font-weight: bold;
+}
+
+/* Кнопки действий в таблице */
+td button {
+    background: none;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+}
+
+    td button i {
+        margin-right: 2px;
+    }
+
+    td button.btn-start {
+        color: #10b981;
+    }
+
+    td button.btn-stop {
+        color: #ef4444;
+    }
+
+    td button.btn-edit {
+        color: #f59e0b;
+    }
+
+    td button.btn-chart {
+        color: #8b5cf6;
+    }
+
+    td button.btn-delete {
+        color: #ef4444;
+    }
+
+    td button:hover {
+        background: rgba(255,255,255,0.1);
+        transform: scale(1.05);
+    }
+
+/* Вкладки */
+.tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid #2d2d3f;
+    margin-bottom: 12px;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 12px 12px 0 0;
+    font-weight: 500;
+}
+
+    .tab-btn.active {
+        background: #7c3aed;
+        color: white;
+    }
+
+.tab-content {
+    background: #1e1e2e;
+    border-radius: 12px;
+    padding: 16px;
+    min-height: 300px;
+}
+
+.tab-pane {
+    display: none;
+}
+
+    .tab-pane.active {
+        display: block;
+    }
+
+/* Карточки внутри вкладок */
+.card {
+    background: #2a2a3a;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.sub-table {
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+    .sub-table th, .sub-table td {
+        padding: 6px 8px;
+    }
+
+/* Логи – уровни */
+.log-level-info {
+    color: #55ff55;
+}
+
+.log-level-warning {
+    color: #ffaa55;
+}
+
+.log-level-error {
+    color: #ff5555;
+}
+
+/* Модальное окно */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #1e1e2e;
+    padding: 20px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #aaa;
+}
+
+    .close-modal:hover {
+        color: white;
+    }
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+    .form-group label {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%;
+        padding: 8px;
+        background: #2a2a3a;
+        border: 1px solid #4a4a5a;
+        border-radius: 6px;
+        color: white;
+    }
+
+/* График */
+.chart-container {
+    width: 100%;
+    height: 400px;
+    background: #0d1117;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+/* Стакан */
+.orderbook-table {
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+    .orderbook-table td {
+        padding: 4px 8px;
+    }
+
+.bid-price {
+    color: #10b981;
+}
+
+.ask-price {
+    color: #ef4444;
+}
+
+/* ========== АДАПТИВНОСТЬ (ТОЛЬКО ПОДСТРОЙКА ПОД РАЗМЕРЫ ЭКРАНА) ========== */
+
+/* Планшеты и небольшие ноутбуки (768px - 1024px) */
+@media (max-width: 1024px) {
+    .top-bar {
+        gap: 12px;
+    }
+
+    .actions {
+        gap: 6px;
+    }
+
+    button {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    .filters {
+        gap: 8px;
+    }
+
+    th, td {
+        padding: 8px 6px;
+        font-size: 0.85rem;
+    }
+
+        td button {
+            padding: 4px 6px;
+            font-size: 0.75rem;
+        }
+}
+
+/* Мобильные устройства (до 768px) */
+@media (max-width: 768px) {
+    .top-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .logo {
+        margin-right: 0;
+        text-align: center;
+    }
+
+    .actions {
+        justify-content: center;
+    }
+
+    .filters {
+        flex-direction: column;
+    }
+
+        .filters input, .filters select {
+            width: 100%;
+            padding: 10px;
+        }
+
+    .bots-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #bots-table {
+        min-width: 600px;
+    }
+
+    th, td {
+        padding: 8px 4px;
+        font-size: 0.8rem;
+    }
+
+        td button {
+            padding: 6px 8px;
+            font-size: 0.7rem;
+            margin: 2px;
+        }
+
+    .tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-btn {
+        padding: 6px 16px;
+        font-size: 0.85rem;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 12px;
+        max-height: 85vh;
+    }
+
+    .card {
+        padding: 8px;
+    }
+
+    .sub-table th, .sub-table td {
+        padding: 4px 6px;
+        font-size: 0.75rem;
+    }
+
+    .chart-container {
+        height: 300px;
+    }
+
+    .orderbook-table td {
+        padding: 2px 4px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Очень маленькие экраны (до 480px) */
+@media (max-width: 480px) {
+    .logo {
+        font-size: 1.2rem;
+    }
+
+    button {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+
+    .status-badge {
+        font-size: 0.7rem;
+    }
+
+    th, td {
+        font-size: 0.7rem;
+    }
+
+        td button {
+            padding: 4px 6px;
+            font-size: 0.65rem;
+        }
+
+    .tab-btn {
+        padding: 4px 12px;
+        font-size: 0.75rem;
+    }
+
+    .form-group input, .form-group select {
+        padding: 6px;
+    }
+}
+/* Кастомный селектор торговой пары */
+.custom-symbol-select {
+    position: relative;
+    width: 100%;
+}
+
+    .custom-symbol-select input {
+        width: 100%;
+        padding: 8px;
+        background: #2a2a3a;
+        border: 1px solid #4a4a5a;
+        border-radius: 6px;
+        color: white;
+        box-sizing: border-box;
+    }
+
+.symbol-list-container {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #2a2a3a;
+    border: 1px solid #4a4a5a;
+    border-radius: 6px;
+    margin-top: 4px;
+    max-height: 250px;
+    overflow-y: auto;
+    display: none;
+}
+
+    .symbol-list-container.show {
+        display: block;
+    }
+
+.symbol-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+    .symbol-option:hover {
+        background: #3a3a5a;
+    }
+
+    .symbol-option.selected {
+        background: #7c3aed;
+    }

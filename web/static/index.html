@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Vectra – Веб-интерфейс</title>
+    <!-- Основные стили -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.js"></script>
+    <!-- Notyf (уведомления) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <!-- Font Awesome (иконки) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Дополнительные стили для начальной загрузки темы */
+        body.dark {
+            background-color: #0f0f1a;
+            color: #e0e0e0;
+        }
+
+        body.light {
+            background-color: #f5f5f5;
+            color: #1a1a1a;
+        }
+    </style>
+</head>
+<body class="dark">
+    <div id="app">
+        <!-- Форма входа -->
+        <div id="login-container" class="container">
+            <div class="login-card">
+                <h2><i class="fas fa-robot"></i> Vectra</h2>
+                <input type="password" id="password-input" placeholder="Пароль" autocomplete="off">
+                <button id="login-btn"><i class="fas fa-sign-in-alt"></i> Войти</button>
+                <div id="login-error" class="error-message"></div>
+            </div>
+        </div>
+
+        <!-- Основной интерфейс -->
+        <div id="main-container" style="display: none;">
+            <!-- Верхняя панель -->
+            <div class="top-bar">
+                <div class="logo"><i class="fas fa-chart-line"></i> Vectra</div>
+                <div class="actions">
+                    <button id="refresh-btn" class="primary"><i class="fas fa-sync-alt"></i> Обновить</button>
+                    <button id="add-bot-btn" class="primary"><i class="fas fa-robot"></i> Добавить бота</button>
+                    <button id="add-connector-btn" class="primary"><i class="fas fa-plug"></i> Добавить коннектор</button>
+                    <!-- Кнопки "Ручная торговля" и "Advanced Terminal" удалены -->
+                    <button id="theme-toggle" class="secondary"><i class="fas fa-palette"></i> Тема</button>
+                    <button id="logout-btn" class="danger"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+                </div>
+                <div id="conn-status" class="status-badge"><i class="fas fa-circle"></i> СОЕДИНЕНИЕ...</div>
+            </div>
+
+            <!-- Фильтры -->
+            <div class="filters">
+                <input type="text" id="search-input" placeholder="🔍 Поиск по имени или символу...">
+                <select id="filter-select">
+                    <option value="all">Все</option>
+                    <option value="running">Активные</option>
+                    <option value="stopped">Остановленные</option>
+                    <option value="trend">Трендовые</option>
+                    <option value="grid">Сеточные</option>
+                    <option value="manual">Ручные</option>
+                </select>
+            </div>
+
+            <!-- Таблица ботов -->
+            <div class="bots-table-container">
+                <table id="bots-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Имя бота</th>
+                            <th>Тип</th>
+                            <th>Символ</th>
+                            <th>Сделок (закрыто)</th>
+                            <th>PnL (USDT)</th>
+                            <th>Коннектор</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Вкладки -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="positions"><i class="fas fa-chart-simple"></i> Позиции</button>
+                <button class="tab-btn" data-tab="orders"><i class="fas fa-clipboard-list"></i> Ордера</button>
+                <button class="tab-btn" data-tab="portfolio"><i class="fas fa-coins"></i> Портфель</button>
+                <button class="tab-btn" data-tab="connectors"><i class="fas fa-plug"></i> Коннекторы</button>
+                <button class="tab-btn" data-tab="logs"><i class="fas fa-history"></i> Логи</button>
+            </div>
+            <div class="tab-content">
+                <div id="tab-positions" class="tab-pane active"></div>
+                <div id="tab-orders" class="tab-pane"></div>
+                <div id="tab-portfolio" class="tab-pane"></div>
+                <div id="tab-connectors" class="tab-pane"></div>
+                <div id="tab-logs" class="tab-pane"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно (общее) -->
+    <div id="modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Главный модуль – точка входа (ES модуль) -->
+    <script type="module" src="/static/js/main.js"></script>
+
+    <script>
+        // Глобальная функция showLogin для вызова из api.js при ошибке 401
+        window.showLogin = function () {
+            const loginContainer = document.getElementById('login-container');
+            const mainContainer = document.getElementById('main-container');
+            if (loginContainer && mainContainer) {
+                loginContainer.style.display = 'flex';
+                mainContainer.style.display = 'none';
+                const pwdInput = document.getElementById('password-input');
+                if (pwdInput) pwdInput.value = '';
+                const errorDiv = document.getElementById('login-error');
+                if (errorDiv) errorDiv.textContent = '';
+                if (window.wsUpdates && window.wsUpdates.close) {
+                    window.wsUpdates.close();
+                }
+                localStorage.removeItem('access_token');
+            }
+        };
+    </script>
+</body>
+</html>

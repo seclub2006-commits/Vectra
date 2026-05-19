@@ -1,0 +1,490 @@
+syntax = "proto3";
+
+package core;
+
+service CoreService {
+  // Боты
+  rpc StartBot (StartBotRequest) returns (BotResponse);
+  rpc StopBot (StopBotRequest) returns (BotResponse);
+  rpc DeleteBot (DeleteBotRequest) returns (BotResponse);
+  rpc GetBotsList (Empty) returns (BotsListResponse);
+  rpc GetBotStatus (GetBotStatusRequest) returns (BotStatusResponse);
+  rpc GetBotTrades (GetBotTradesRequest) returns (TradesResponse);
+  rpc GetFullState (Empty) returns (FullStateResponse);
+  rpc CreateBot (CreateBotRequest) returns (BotResponse);
+  
+  // Рыночные данные
+  rpc GetCandles (CandlesRequest) returns (CandlesResponse);
+  rpc GetTicker (TickerRequest) returns (TickerResponse);
+  rpc GetSymbols (SymbolsRequest) returns (SymbolsResponse);
+  rpc GetOrderBook (OrderBookRequest) returns (OrderBookResponse);
+  
+  // Коннекторы
+  rpc GetConnectorsList (Empty) returns (ConnectorsListResponse);
+  rpc GetConnectorSettings (GetConnectorSettingsRequest) returns (ConnectorSettingsResponse);
+  rpc CreateConnector (CreateConnectorRequest) returns (StatusResponse);
+  rpc DeleteConnector (DeleteConnectorRequest) returns (StatusResponse);
+  rpc UpdateConnectorSettings (UpdateConnectorRequest) returns (StatusResponse);
+  rpc SetConnectorStatus (SetConnectorStatusRequest) returns (StatusResponse);
+  rpc CheckConnector (CheckConnectorRequest) returns (CheckConnectorResponse);
+  
+  // Управление ботами
+  rpc UpdateBotConfig (UpdateBotConfigRequest) returns (StatusResponse);
+  rpc ClosePosition (ClosePositionRequest) returns (StatusResponse);
+  rpc Shutdown (Empty) returns (StatusResponse);
+
+  // Реальная торговля
+  rpc SetLeverage (SetLeverageRequest) returns (StatusResponse);
+  rpc SetTPSL (SetTPSLRequest) returns (StatusResponse);
+  rpc GetPosition (GetPositionRequest) returns (GetPositionResponse);
+
+  // Логи
+  rpc GetLogsSince (GetLogsSinceRequest) returns (GetLogsSinceResponse);
+
+  // Ручные операции
+  rpc CallManualBot (CallManualBotRequest) returns (CallManualBotResponse);
+  rpc GetBalance (GetBalanceRequest) returns (GetBalanceResponse);
+  rpc GetOpenOrders (GetOpenOrdersRequest) returns (GetOpenOrdersResponse);
+  rpc CancelOrder (CancelOrderRequest) returns (StatusResponse);
+  rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+
+  // Источник данных для графика
+  rpc GetBotMarketDataSource (GetBotMarketDataSourceRequest) returns (GetBotMarketDataSourceResponse);
+
+  // Streaming свечей
+  rpc SubscribeCandles (SubscribeCandlesRequest) returns (stream Candle);
+
+  // НОВЫЕ RPC для ручного управления другими ботами
+  rpc CallBotMethod (CallBotMethodRequest) returns (CallBotMethodResponse);
+  rpc GetBotStrategyDescription (GetBotStrategyDescriptionRequest) returns (GetBotStrategyDescriptionResponse);
+
+  // НОВЫЙ RPC для получения схемы параметров стратегии по имени (без запуска бота)
+  rpc GetStrategyParamsSchema (GetStrategyParamsSchemaRequest) returns (GetStrategyParamsSchemaResponse);
+}
+
+message Empty {}
+
+message StartBotRequest {
+  int32 bot_id = 1;
+  string name = 2;
+  string strategy = 3;
+  string connector = 4;
+  string symbol = 5;
+  string timeframe = 6;
+  string margin_mode = 7;
+  int32 leverage = 8;
+  float position_size = 9;
+  map<string, string> params = 10;
+  string market_data_source = 11;
+  string market_data_source_config = 12;
+}
+
+message CreateBotRequest {
+  string name = 1;
+  string strategy = 2;
+  string connector = 3;
+  string symbol = 4;
+  string timeframe = 5;
+  string margin_mode = 6;
+  int32 leverage = 7;
+  float position_size = 8;
+  map<string, string> params = 9;
+  string market_data_source = 10;
+  string market_data_source_config = 11;
+}
+
+message StopBotRequest { int32 bot_id = 1; }
+message DeleteBotRequest { int32 bot_id = 1; }
+message GetBotStatusRequest { int32 bot_id = 1; }
+message GetBotTradesRequest { int32 bot_id = 1; }
+
+message BotResponse {
+  bool success = 1;
+  string message = 2;
+  int32 bot_id = 3;
+}
+
+message BotsListResponse {
+  repeated BotInfo bots = 1;
+}
+
+message BotInfo {
+  int32 id = 1;
+  string name = 2;
+  string strategy = 3;
+  string connector = 4;
+  string symbol = 5;
+  bool running = 6;
+}
+
+message BotStatusResponse {
+  bool running = 1;
+  bool position_open = 2;
+  string side = 3;
+  double entry_price = 4;
+  string symbol = 5;
+  int32 open_positions = 6;
+  int32 closed_positions = 7;
+}
+
+message Trade {
+  int32 bot_id = 1;
+  string bot_name = 2;
+  string symbol = 3;
+  string side = 4;
+  int64 open_time = 5;
+  double open_price = 6;
+  int64 close_time = 7;
+  double close_price = 8;
+  double pnl = 9;
+  double size = 10;
+}
+
+message TradesResponse { repeated Trade trades = 1; }
+
+message FullStateResponse {
+  string state = 1;
+}
+
+message CandlesRequest {
+  string connector = 1;
+  string symbol = 2;
+  string timeframe = 3;
+  int32 limit = 4;
+  int64 start_time = 5;
+  int64 end_time = 6;
+  string market_data_source = 7;
+  string market_data_source_config = 8;
+}
+
+message CandlesResponse {
+  repeated Candle candles = 1;
+}
+
+message Candle {
+  int64 timestamp = 1;
+  double open = 2;
+  double high = 3;
+  double low = 4;
+  double close = 5;
+  double volume = 6;
+}
+
+message TickerRequest {
+  string connector = 1;
+  string symbol = 2;
+}
+
+message TickerResponse {
+  double last = 1;
+  double bid = 2;
+  double ask = 3;
+  double volume = 4;
+}
+
+message SymbolsRequest {
+  string connector = 1;
+  string product_type = 2;
+}
+
+message SymbolsResponse { repeated string symbols = 1; }
+
+message OrderBookRequest {
+  string connector = 1;
+  string symbol = 2;
+  int32 depth = 3;
+}
+
+message OrderBookResponse {
+  repeated Level bids = 1;
+  repeated Level asks = 2;
+}
+
+message Level {
+  double price = 1;
+  double amount = 2;
+}
+
+message ConnectorInfo {
+  string name = 1;
+  string status = 2;
+  string exchange = 3;
+  bool testnet = 4;
+  string product_type = 5;
+}
+
+message ConnectorsListResponse {
+  repeated ConnectorInfo connectors = 1;
+}
+
+message GetConnectorSettingsRequest {
+  string name = 1;
+}
+
+message ConnectorSettingsResponse {
+  string name = 1;
+  string exchange = 2;
+  bool testnet = 3;
+  string api_key = 4;
+  string api_secret = 5;
+  string api_passphrase = 6;
+  string product_type = 7;
+  int32 max_retries = 8;
+  double retry_backoff = 9;
+  int32 ws_ping_interval = 10;
+  int32 ws_reconnect_delay = 11;
+  string ip_whitelist = 12;
+  bool auto_reconnect = 13;
+  bool retry_on_limit = 14;
+  int32 http_timeout_read = 15;
+  int32 http_timeout_connect = 16;
+  string order_type_default = 17;
+}
+
+message CreateConnectorRequest {
+  string name = 1;
+  string exchange_id = 2;
+  bool testnet = 3;
+  string api_key = 4;
+  string api_secret = 5;
+  string api_passphrase = 6;
+  string product_type = 7;
+  int32 max_retries = 8;
+  double retry_backoff = 9;
+  int32 ws_ping_interval = 10;
+  int32 ws_reconnect_delay = 11;
+  string ip_whitelist = 12;
+  bool auto_reconnect = 13;
+  bool retry_on_limit = 14;
+  int32 http_timeout_read = 15;
+  int32 http_timeout_connect = 16;
+  string order_type_default = 17;
+}
+
+message DeleteConnectorRequest {
+  string name = 1;
+}
+
+message UpdateConnectorRequest {
+  string name = 1;
+  string settings_json = 2;
+}
+
+message SetConnectorStatusRequest {
+  string name = 1;
+  string status = 2;
+}
+
+message CheckConnectorRequest {
+  string name = 1;
+}
+
+message CheckConnectorResponse {
+  string status = 1;
+}
+
+message UpdateBotConfigRequest {
+  int32 bot_id = 1;
+  string connector_name = 2;
+  string symbol = 3;
+  string timeframe = 4;
+  double position_size = 5;
+  string params_json = 6;
+  bool emulator_enabled = 7;
+  string market_data_source = 8;
+  string market_data_source_config = 9;
+}
+
+message ClosePositionRequest {
+  string connector_name = 1;
+  string symbol = 2;
+  string hold_side = 3;
+}
+
+message StatusResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message SetLeverageRequest {
+  string connector_name = 1;
+  string symbol = 2;
+  int32 leverage = 3;
+  string margin_mode = 4;
+}
+
+message SetTPSLRequest {
+  string connector_name = 1;
+  string symbol = 2;
+  string hold_side = 3;
+  double trigger_price = 4;
+  double execute_price = 5;
+  string tpsl_type = 6;
+  double size = 7;
+}
+
+message GetPositionRequest {
+  string connector_name = 1;
+  string symbol = 2;
+}
+
+message PositionInfo {
+  string symbol = 1;
+  string side = 2;
+  double size = 3;
+  double entry_price = 4;
+  double mark_price = 5;
+  double pnl = 6;
+  int32 leverage = 7;
+  double margin = 8;
+  double liquidation_price = 9;
+  string margin_mode = 10;
+}
+
+message GetPositionResponse {
+  bool success = 1;
+  string error = 2;
+  repeated PositionInfo positions = 3;
+}
+
+message GetLogsSinceRequest {
+  int64 since_timestamp = 1;
+  int32 limit = 2;
+}
+
+message LogEntry {
+  int64 timestamp = 1;
+  string level = 2;
+  string category = 3;
+  string message_ru = 4;
+}
+
+message GetLogsSinceResponse {
+  repeated LogEntry logs = 1;
+}
+
+message CallManualBotRequest {
+  int32 bot_id = 1;
+  string method = 2;
+  string params_json = 3;
+}
+
+message CallManualBotResponse {
+  bool success = 1;
+  string result_json = 2;
+  string error = 3;
+}
+
+message GetBalanceRequest {
+  string connector_name = 1;
+  string currency = 2;
+}
+
+message BalanceItem {
+  string currency = 1;
+  double available = 2;
+  double frozen = 3;
+  double total = 4;
+}
+
+message GetBalanceResponse {
+  bool success = 1;
+  string error = 2;
+  repeated BalanceItem balances = 3;
+}
+
+message GetOpenOrdersRequest {
+  string connector_name = 1;
+  string symbol = 2;
+}
+
+message OrderInfo {
+  string order_id = 1;
+  string client_oid = 2;
+  string symbol = 3;
+  double price = 4;
+  double quantity = 5;
+  double filled = 6;
+  string status = 7;
+  string side = 8;
+  string order_type = 9;
+  int64 timestamp = 10;
+}
+
+message GetOpenOrdersResponse {
+  bool success = 1;
+  string error = 2;
+  repeated OrderInfo orders = 3;
+}
+
+message CancelOrderRequest {
+  string connector_name = 1;
+  string symbol = 2;
+  string order_id = 3;
+  string client_oid = 4;
+}
+
+message CreateOrderRequest {
+  string connector_name = 1;
+  string symbol = 2;
+  string side = 3;
+  string order_type = 4;
+  double quantity = 5;
+  double price = 6;
+  double preset_tp = 7;
+  double preset_sl = 8;
+}
+
+message CreateOrderResponse {
+  bool success = 1;
+  string error = 2;
+  string order_id = 3;
+  string client_oid = 4;
+}
+
+message GetBotMarketDataSourceRequest {
+  int32 bot_id = 1;
+}
+
+message GetBotMarketDataSourceResponse {
+  string source = 1;
+  string config = 2;
+}
+
+message SubscribeCandlesRequest {
+  string connector = 1;
+  string symbol = 2;
+  string timeframe = 3;
+  string market_data_source = 4;
+  string market_data_source_config = 5;
+}
+
+// НОВЫЕ СООБЩЕНИЯ
+message CallBotMethodRequest {
+  int32 bot_id = 1;
+  string method_name = 2;
+  string params_json = 3;
+}
+
+message CallBotMethodResponse {
+  bool success = 1;
+  string result_json = 2;
+  string error = 3;
+}
+
+message GetBotStrategyDescriptionRequest {
+  int32 bot_id = 1;
+}
+
+message GetBotStrategyDescriptionResponse {
+  string description_json = 1;
+}
+
+// --- НОВЫЕ СООБЩЕНИЯ для получения схемы параметров стратегии ---
+message GetStrategyParamsSchemaRequest {
+  string strategy_name = 1;  // например, "trend.ema_bot.EmaBot"
+}
+
+message GetStrategyParamsSchemaResponse {
+  string schema_json = 1;    // JSON-словарь с описанием параметров
+}
